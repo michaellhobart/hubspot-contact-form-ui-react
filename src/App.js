@@ -1,25 +1,54 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
+import axios from 'axios';
+
+
+import GlobalContext from './context/GlobalContext'
+
+
 function App() {
+  // const [ barberList, setBarberList ] = useState([])
+  const [ emailsList, setEmailsList ] = useState([])
+
+  useEffect( () => {
+    const data = {
+      // barbers: 'https://wu580hd8k5.execute-api.us-east-1.amazonaws.com/dev/barbers',
+      emails: 'https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/emails'
+    }
+
+    Promise.all(
+      Object.entries( data )
+      .map( data => {
+        console.log(data[1])
+        return axios
+        .get(data[1])
+        .catch( e => {
+          throw new Error(`Failed GET Req for ${data[0]}`, e);
+        })
+      })
+    )
+    .then( results => {
+      // setBarberList(results[0].data)
+      setEmailsList(results[0].data)
+    })
+    .catch( err => console.log(err))
+  }, [])
+
+
+
+
+
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <GlobalContext.Provider value={{
+      emails:emailsList
+     }}>
+      <div className="App">
+        <header className="App-header">
+        </header>
+      </div>
+    </GlobalContext.Provider>
   );
 }
 
