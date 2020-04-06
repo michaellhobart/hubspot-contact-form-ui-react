@@ -8,7 +8,7 @@ const InfoSection = (props) => {
         <Col>
         <div>
           <h1>Add New Contact</h1>
-          <h4>Add a new contact to your Hubspot CRM.</h4>
+          <h4>Add a new contact to your Hubspot CRM easily by filling out this form.</h4>
         </div>
         </Col>
       </Row>
