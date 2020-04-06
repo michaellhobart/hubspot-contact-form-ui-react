@@ -34,7 +34,7 @@ const FormSection = (props) => {
   }
 
 const handleFormSubmit = () => {
-    if (companiesList.includes(formState.company)){
+    if (companiesList.includes(formState.company) || formState.company === ""){
       setLoading(true)
 
       axios.post('https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/', formState)
