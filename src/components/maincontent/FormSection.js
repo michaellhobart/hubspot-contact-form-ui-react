@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Col, Row, Button, Form, FormGroup, Label, Input, FormFeedback } from 'reactstrap';
+import { Container, Col, Row, Button, Form, FormGroup, Label, Input, FormFeedback, Spinner } from 'reactstrap';
 
 import axios from 'axios'
 
@@ -21,6 +21,8 @@ const FormSection = (props) => {
 
   const [ emailError, setEmailError ] = useState({class:"", message:""})
   const [ submitEnabled, setSubmitEnabled ] = useState({enabled:false, color:"secondary"})
+  const [ loading, setLoading ] = useState(true)
+  const [ success, setSuccess ] = useState(false)
 
   const handleInputChange = (e) => {
     const id = e.target.id
@@ -29,10 +31,13 @@ const FormSection = (props) => {
   }
 
   const handleFormSubmit = () => {
+    setLoading(true)
     console.log(formState)
     axios.post('https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/', formState)
     .then( res => {
       console.log(res);
+      setLoading(false)
+      setSuccess(true)
     })
   }
 
@@ -61,7 +66,8 @@ const FormSection = (props) => {
   }
 
 
-  useEffect( () => {
+  const getEmails = () => {
+    console.log("GETTING EMAILS");
     const data = {
       emails: 'https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/emails'
     }
@@ -80,10 +86,64 @@ const FormSection = (props) => {
     .then( results => {
       // setBarberList(results[0].data)
       setEmailsList(results[0].data)
+      setLoading(false)
     })
     .catch( err => console.log(err))
+  }
+
+
+  const resetForm = () => {
+    setSuccess(false)
+    setLoading(true)
+    setFormState({
+    email:"",
+    firstname:"",
+    lastname:"",
+    company:"",
+    address:"",
+    city:"",
+    state:"",
+    zip:"",
+    website:"",
+    phone:""
+  })
+    setEmailError({class:"", message:""})
+    getEmails()
+  }
+
+
+  useEffect( () => {
+    getEmails()
   }, [])
 
+
+  if (loading){
+    return (
+      <Container style={{marginTop:"200px"}}>
+        <Row >
+          <Col style={{textAlign:"center"}}>
+            <Spinner color="primary" style={{ width: '5rem', height: '5rem'}} />
+          </Col>
+        </Row>
+      </Container>
+    )
+  }
+
+  if (success){
+    return (
+      <Container style={{marginBottom:"5rem"}}>
+        <Row style={{textAlign:"center"}}>
+          <Col>
+          <div style={{marginBottom:"3rem"}}>
+            <h3>Your Contact has been added!</h3>
+            <p>Would you like to add another?</p>
+          </div>
+          <Button color="primary" size="lg" onClick={resetForm} >Add Another Contact</Button>
+          </Col>
+        </Row>
+      </Container>
+    )
+  }
 
   return (
     <Form>
