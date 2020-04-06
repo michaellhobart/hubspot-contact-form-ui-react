@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-// import './App.css';
-import { Button } from 'reactstrap';
 
 import axios from 'axios';
-
 
 import GlobalContext from './context/GlobalContext'
 
 import TopNav from './components/topnav/TopNav'
+import MainContent from './components/maincontent/MainContent'
 
 
 function App() {
@@ -49,6 +47,7 @@ function App() {
      }}>
       <div className="App">
         <TopNav />
+        <MainContent />
       </div>
     </GlobalContext.Provider>
   );
