@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Col, Row, Button, Form, FormGroup, Label, Input } from 'reactstrap';
+import React, { useState, useEffect } from 'react';
+import { Col, Row, Button, Form, FormGroup, Label, Input, FormFeedback } from 'reactstrap';
 
 import axios from 'axios'
 
 const FormSection = (props) => {
+
+  const [ emailsList, setEmailsList ] = useState([])
   const [formState, setFormState ] = useState({
-    email:"john58@sims.com",
+    email:"",
     firstname:"Tim",
     lastname:"McGonagle",
     company:"Shaws",
@@ -17,28 +19,83 @@ const FormSection = (props) => {
     phone:"781-888-3562"
   })
 
+  const [ emailError, setEmailError ] = useState({class:"", message:""})
+  const [ submitEnabled, setSubmitEnabled ] = useState({enabled:false, color:"secondary"})
+
   const handleInputChange = (e) => {
     const id = e.target.id
     const value = e.target.value
     setFormState({...formState, [id]:value})
   }
 
-  const handleSubmit = () => {
+  const handleFormSubmit = () => {
     console.log(formState)
     axios.post('https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/', formState)
     .then( res => {
       console.log(res);
     })
-
   }
+
+  const checkEmailExists = () => {
+    return emailsList.includes(formState.email)
+  }
+
+
+
+  const validateEmail = () => {
+     var emailRegEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+     console.log(emailRegEx.test(formState.email.toLowerCase()))
+    if(formState.email === ""){
+      setEmailError({class:"is-invalid", message:"This is a required field"})
+      setSubmitEnabled({enabled:false, color:"secondary"})
+    } else if (checkEmailExists()){
+      setEmailError({class:"is-invalid", message:"This email already exists in our system"})
+      setSubmitEnabled({enabled:false, color:"secondary"})
+    } else if (!emailRegEx.test(formState.email.toLowerCase())){
+      setEmailError({class:"is-invalid", message:"This is not a valid email"})
+      setSubmitEnabled({enabled:false, color:"secondary"})
+    } else {
+      setEmailError({class:"is-valid", message:""})
+      setSubmitEnabled({enabled:true, color:"primary"})
+    }
+  }
+
+
+  useEffect( () => {
+    const data = {
+      emails: 'https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/emails'
+    }
+
+    Promise.all(
+      Object.entries( data )
+      .map( data => {
+        console.log(data[1])
+        return axios
+        .get(data[1])
+        .catch( e => {
+          throw new Error(`Failed GET Req for ${data[0]}`, e);
+        })
+      })
+    )
+    .then( results => {
+      // setBarberList(results[0].data)
+      setEmailsList(results[0].data)
+    })
+    .catch( err => console.log(err))
+  }, [])
 
 
   return (
     <Form>
     <div style={{marginBottom:"3rem"}}>
     <FormGroup>
-      <Label for="email">Email</Label>
-      <Input type="text" name="email" id="email" placeholder="hub.spot@hubspot.com" value={formState.email} onChange={handleInputChange}/>
+      <Label for="email">Email *</Label>
+      <Input type="text" name="email" id="email" placeholder="hub.spot@hubspot.com" className={emailError.class} required
+      value={formState.email}
+      onChange={handleInputChange}
+      onBlur={validateEmail}
+      />
+      <FormFeedback>{emailError.message}</FormFeedback>
     </FormGroup>
       <Row form>
         <Col md={6}>
@@ -101,7 +158,7 @@ const FormSection = (props) => {
         </Col>
       </Row>
       </div>
-      <Button color="primary" size="lg" onClick={handleSubmit} >Add Contact</Button>
+      <Button color={submitEnabled.color} size="lg" onClick={handleFormSubmit} disabled={!submitEnabled} style={{cursor:"default"}}>Add Contact</Button>
     </Form>
   );
 }
