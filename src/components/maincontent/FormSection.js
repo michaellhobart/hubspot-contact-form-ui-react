@@ -1,22 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Col, Row, Button, Form, FormGroup, Label, Input, FormFeedback, Spinner } from 'reactstrap';
+import {Typeahead} from 'react-bootstrap-typeahead';
 
 import axios from 'axios'
 
 const FormSection = (props) => {
 
   const [ emailsList, setEmailsList ] = useState([])
+  const [ companiesList, setCompaniesList ] = useState([])
+
   const [formState, setFormState ] = useState({
     email:"",
-    firstname:"Tim",
-    lastname:"McGonagle",
-    company:"Shaws",
-    address:"25 Beanzie St",
-    city:"Hanson",
-    state:"MA",
-    zip:"02341",
-    website:"www.cartright.com",
-    phone:"781-888-3562"
+    firstname:"",
+    lastname:"",
+    company:"",
+    address:"",
+    city:"",
+    state:"",
+    zip:"",
+    website:"",
+    phone:""
   })
 
   const [ emailError, setEmailError ] = useState({class:"", message:""})
@@ -30,15 +33,25 @@ const FormSection = (props) => {
     setFormState({...formState, [id]:value})
   }
 
-  const handleFormSubmit = () => {
-    setLoading(true)
-    console.log(formState)
-    axios.post('https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/', formState)
-    .then( res => {
-      console.log(res);
-      setLoading(false)
-      setSuccess(true)
-    })
+const handleFormSubmit = () => {
+    if (companiesList.includes(formState.company)){
+      setLoading(true)
+
+      axios.post('https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/', formState)
+      .then( res => {
+        setLoading(false)
+        setSuccess(true)
+      })
+    } else {
+      setLoading(true)
+      Promise.all([
+        axios.post('https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/', formState),
+        axios.post('https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/companies/', {name:formState.company})
+      ]).then(results => {
+        setLoading(false)
+        setSuccess(true)
+      })
+    }
   }
 
   const checkEmailExists = () => {
@@ -66,10 +79,11 @@ const FormSection = (props) => {
   }
 
 
-  const getEmails = () => {
+  const dataPrefetch = () => {
     console.log("GETTING EMAILS");
     const data = {
-      emails: 'https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/emails'
+      emails: 'https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/contacts/emails',
+      companies: 'https://t9r31l27md.execute-api.us-east-1.amazonaws.com/dev/companies'
     }
 
     Promise.all(
@@ -86,6 +100,7 @@ const FormSection = (props) => {
     .then( results => {
       // setBarberList(results[0].data)
       setEmailsList(results[0].data)
+      setCompaniesList(results[1].data)
       setLoading(false)
     })
     .catch( err => console.log(err))
@@ -108,12 +123,23 @@ const FormSection = (props) => {
     phone:""
   })
     setEmailError({class:"", message:""})
-    getEmails()
+    dataPrefetch()
+  }
+
+  const handleCompanySelection = (selection) => {
+    const selected = selection[0]
+    if (typeof selection[0] === "object"){
+      return setFormState({...formState, company:selected.label})
+    }
+    if (typeof selection[0] === "string"){
+      return setFormState({...formState, company:selected})
+    }
+    return setFormState({...formState, company:""})
   }
 
 
   useEffect( () => {
-    getEmails()
+    dataPrefetch()
   }, [])
 
 
@@ -175,7 +201,7 @@ const FormSection = (props) => {
       <div style={{marginBottom:"3rem"}}>
       <FormGroup>
         <Label for="company">Company</Label>
-        <Input type="text" name="company" id="company" placeholder="HubSpot" value={formState.company} onChange={handleInputChange}/>
+        <Typeahead type="text" name="company" id="company" placeholder="HubSpot" value={formState.company}  allowNew={true} onChange={(selected) => handleCompanySelection(selected)} options={companiesList}/>
       </FormGroup>
       <FormGroup>
         <Label for="address">Address</Label>
@@ -218,7 +244,7 @@ const FormSection = (props) => {
         </Col>
       </Row>
       </div>
-      <Button color={submitEnabled.color} size="lg" onClick={handleFormSubmit} disabled={!submitEnabled} style={{cursor:"default"}}>Add Contact</Button>
+      <Button color={submitEnabled.color} size="lg" onClick={handleFormSubmit} disabled={!submitEnabled.enabled} style={{cursor:"default"}}>Add Contact</Button>
     </Form>
   );
 }
