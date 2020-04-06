@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import './App.css';
+// import './App.css';
+import { Button } from 'reactstrap';
 
 import axios from 'axios';
 
 
 import GlobalContext from './context/GlobalContext'
+
+import TopNav from './components/topnav/TopNav'
 
 
 function App() {
@@ -45,8 +48,7 @@ function App() {
       emails:emailsList
      }}>
       <div className="App">
-        <header className="App-header">
-        </header>
+        <TopNav />
       </div>
     </GlobalContext.Provider>
   );
